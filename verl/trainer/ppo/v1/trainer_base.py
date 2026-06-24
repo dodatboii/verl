@@ -673,6 +673,14 @@ class PPOTrainer(ABC):
         else:
             logger.warning(f"Warning: No dataloader state found at {dataloader_local_path}, will start from scratch")
 
+        # 5. load transfer queue checkpoint
+        tq_ckpt_path = os.path.join(global_step_folder, "transfer_queue")
+        if os.path.exists(tq_ckpt_path):
+            tq.load_checkpoint(tq_ckpt_path)
+            logger.info(f"Loaded transfer queue checkpoint from {tq_ckpt_path}")
+        else:
+            logger.warning(f"No transfer queue checkpoint found at {tq_ckpt_path}, tq will start empty")
+
     def _save_checkpoint(self):
         """Save actor, critic, and dataloader checkpoints to local (and optionally remote) storage."""
         from verl.utils.fs import local_mkdir_safe
@@ -725,6 +733,11 @@ class PPOTrainer(ABC):
         local_mkdir_safe(local_global_step_folder)
         dataloader_local_path = os.path.join(local_global_step_folder, "data.pt")
         torch.save(self.train_dataloader.state_dict(), dataloader_local_path)
+
+        # save transfer queue checkpoint
+        tq_ckpt_path = os.path.join(local_global_step_folder, "transfer_queue")
+        tq.save_checkpoint(tq_ckpt_path, metadata={"step": self.global_steps})
+        logger.info(f"Saved transfer queue checkpoint to {tq_ckpt_path}")
 
         # write latest checkpointed iteration tracker for atomic resume
         actor_ckpt_cfg = self.config.actor_rollout_ref.actor.get("checkpoint", {})
