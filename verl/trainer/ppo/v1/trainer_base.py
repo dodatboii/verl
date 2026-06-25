@@ -678,6 +678,7 @@ class PPOTrainer(ABC):
         if os.path.exists(tq_ckpt_path):
             tq.load_checkpoint(tq_ckpt_path)
             print(f"Loaded transfer queue checkpoint from {tq_ckpt_path}")
+            print(tq.kv_list())
         else:
             print(f"No transfer queue checkpoint found at {tq_ckpt_path}, tq will start empty")
 
